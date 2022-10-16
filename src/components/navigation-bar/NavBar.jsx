@@ -1,48 +1,50 @@
-import { useState, useContext } from "react"
-import { Link } from "react-router-dom"
+import { useContext } from 'react'
+import { useSelector } from 'react-redux'
+
 import { ReactComponent as CrownLogo} from '../../assets/crown.svg'
+import { selectCurrentUser } from '../../store/user/userSelector'
 
 import { signOutUser } from "../../utils/firebase/Firebase"
 import { CartIcon } from "../cart-icon/CartIcon"
 import { CartDropdown } from "../cart-dropdown/CartDropdown"
 
-import { UserContext } from "../../contexts/UserContext"
-import { ShoppingCartContext } from "../../contexts/ShoppingCartContext"
 
-import "./navbar.scss"
+import { NavigationContainer, LogoContainer, NavLinks, NavLink } from "./navbar-styles"
+import { selectIsCartOpen } from '../../store/cart/cartSelector'
+
 
 
 
 export const NavBar = () => {
-  const { currentUser } = useContext(UserContext)
-  const { isCartOpen } = useContext(ShoppingCartContext)
+  const currentUser = useSelector(selectCurrentUser)
+  const isCartOpen = useSelector(selectIsCartOpen)
 
   return (
     <>
-      <div className="navbar">
-        <Link className="logo-container" to="/">
+      <NavigationContainer>
+        <LogoContainer to="/">
           <CrownLogo className="logo"/>
-        </Link>
-        <div className="nav-links-container">
-          <Link className="nav-link" to="/shop">
+        </LogoContainer>
+        <NavLinks>
+          <NavLink to="/shop">
             SHOP
-          </Link>
-          <Link className="nav-link" to="/auth">
+          </NavLink>
+          <NavLink to="/auth">
             {
               currentUser ? (
-                <span className="nav-link" onClick={signOutUser}>SIGN OUT</span>
+                <NavLink as="span" onClick={signOutUser}>SIGN OUT</NavLink>
               ) : (
-                <span className="nav-link">SIGN IN</span>
+                <NavLink as="span">SIGN IN</NavLink>
               )
             }
-          </Link>
-          <Link className="nav-link" to="/checkout">
+          </NavLink>
+          <NavLink to="/checkout">
             CHECKOUT
-          </Link>
+          </NavLink>
           <CartIcon />
-        </div>
+        </NavLinks>
         {isCartOpen && <CartDropdown />}
-      </div>
+      </NavigationContainer>
     </>
   )
 }

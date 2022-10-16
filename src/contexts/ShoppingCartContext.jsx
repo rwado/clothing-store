@@ -1,16 +1,20 @@
-import { createContext, useState } from "react";
+import { createContext, useReducer } from "react";
+
+import { createAction } from "../utils/reducer/Reducer";
+
+
 
 const addNewItemToCart = (cartItems, item) => {
-  const currentItem = cartItems.find((cartItem) => {
-    return cartItem.id === item.id
-  })
+  const currentItem = cartItems.find((cartItem) => 
+    cartItem.id === item.id
+  )
 
   if (currentItem) {
-    return cartItems.map((cartItem) => {
-      return cartItem.id === item.id
+    return cartItems.map((cartItem) =>
+      cartItem.id === item.id
         ? { ...cartItem, quantity: cartItem.quantity + 1}
         : cartItem
-    })
+    )
   }
 
   return [ ...cartItems, { ...item, quantity: 1}]
@@ -43,55 +47,100 @@ const removeItem = (cartItems, item) => {
   return cartItems.filter(cartItem => item.id !== cartItem.id)
 }
 
-
-
-
-
 export const ShoppingCartContext = createContext({
   isCartOpen: false,
   setIsCartOpen: () => {},
   cartItems: [],
   addItemToCart: () => {},
-  itemsQuantity: 0,
-  setItemsQuantity: () => {},
+  removeItemFromCart: () => {},
+  clearItemFromCart: () => {},
+  cartCount: 0,
+  cartTotal: 0,
 });
 
-export const ShoppingCartProvider = ({children}) => {
-  const [isCartOpen, setIsCartOpen] = useState(false);
-  const [cartItems, setCartItems] = useState([])
-  const [itemsQuantity, setItemsQuantity] = useState(0);
+const CART_ACTION_TYPES = {
+  SET_CART_ITEMS: 'SET_CART_ITEMS',
+  SET_IS_CART_OPEN: 'SET_IS_CART_OPEN',
+  SET_CART_COUNT: 'SET_CART_COUNT',
+}
+
+const INITIAL_STATE = {
+  isCartOpen: false,
+  cartItems: [],
+  cartCount: 0,
+  cartTotal: 0,
+}
+
+const cartReducer = (state, action) => {
+  const { type, payload } = action;
+
+  switch(type) {
+    case CART_ACTION_TYPES.SET_IS_CART_OPEN:
+      return {
+        ...state,
+        isCartOpen: payload,
+      }
+    case CART_ACTION_TYPES.SET_CART_ITEMS:
+      return {
+        ...state,
+        ...payload,
+      }
+    default:
+      throw new Error(`Unhandled type of ${type} in cartReducer`);
+  }
+}
+
+
+
+export const ShoppingCartProvider = ({ children }) => {
+  const [{ cartItems, isCartOpen, cartCount }, dispatch] = useReducer(cartReducer, INITIAL_STATE)
+
+  const updateCartItemsReducer = (cartItems) => {
+    const newCartCount = cartItems.reduce((total, item) => {
+      return total + item.quantity;
+    }, 0)
+
+    dispatch(
+      createAction(CART_ACTION_TYPES.SET_CART_ITEMS, {
+        cartItems,
+        cartCount: newCartCount,
+      })
+    );
+  }
 
   const  addItemToCart = (item) => {
-    setCartItems(addNewItemToCart(cartItems, item))
-    setItemsQuantity(itemsQuantity + 1);
+    const newCartItems = addNewItemToCart(cartItems, item);
+    updateCartItemsReducer(newCartItems);
   }
 
   const decrementItemQuantityInCart = (item) => {
-    setCartItems(subtractItemInCart(cartItems, item));
-    console.log("decrement")
-    setItemsQuantity(itemsQuantity - 1);
+    const newCartItems = subtractItemInCart(cartItems, item);
+    updateCartItemsReducer(newCartItems);
   }
 
   const incrementItemQuantityInCart = (item) => {
-    setCartItems(addItemInCart(cartItems, item));
-    setItemsQuantity(itemsQuantity + 1);
+    const newCartItems = addItemInCart(cartItems, item);
+    updateCartItemsReducer(newCartItems);
   }
 
   const removeItemFromCart = (item) => {
-    setCartItems(removeItem(cartItems, item))
-    setItemsQuantity(itemsQuantity - item.quantity)
+    const newCartItems = removeItem(cartItems, item);
+    updateCartItemsReducer(newCartItems);
+  }
+
+  const setIsCartOpen = (bool) => {
+    dispatch(createAction(CART_ACTION_TYPES.SET_IS_CART_OPEN, bool))
   }
  
   const value = {
     isCartOpen, 
     setIsCartOpen,
     addItemToCart, 
-    cartItems, 
-    setCartItems, 
-    itemsQuantity,
     decrementItemQuantityInCart,
     incrementItemQuantityInCart,
-    removeItemFromCart
+    removeItemFromCart,
+    cartItems, 
+    cartCount,
    }
   return (
     <ShoppingCartContext.Provider value={value}>{children}</ShoppingCartContext.Provider>

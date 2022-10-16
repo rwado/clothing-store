@@ -1,15 +1,21 @@
 import { useContext } from "react"
+import { useSelector } from "react-redux"
 import { useNavigate } from "react-router-dom"
-
-import { ShoppingCartContext } from "../../contexts/ShoppingCartContext"
+import { selectCartItems } from "../../store/cart/cartSelector"
 
 import { Button } from "../button/Button"
 import { CartItem } from "../cart-item/CartItem"
 
-import "./cart-dropdown.scss"
+import {
+  CartDropdownContainer,
+  CartDropdownItemsContainer, 
+  CartSummaryContainer, 
+  EmptyMessage,
+  TotalPriceContainer
+} from "./cart-dropdown-styles"
 
 export const CartDropdown = () => {
-  const { cartItems } = useContext(ShoppingCartContext)
+  const cartItems = useSelector(selectCartItems);
   const navigate = useNavigate()
 
   const totalPrice = cartItems.reduce(
@@ -21,16 +27,21 @@ export const CartDropdown = () => {
   }
 
   return (
-    <div className="cart-dropdown">
-      <div className="cart-dropdown-container">
-        {cartItems.map((cartItem) => (
+    <CartDropdownContainer>
+      <CartDropdownItemsContainer>
+      {
+        cartItems.length ? (cartItems.map((cartItem) => (
           <CartItem key={cartItem.id} cartItem={cartItem}/>
-        ))}
-      </div>
-      <div className="cart-button">
-        <div className="total-price-container">{`Total: $${totalPrice}`}</div>
+        )))
+       : (
+          <EmptyMessage>Your cart is empty</EmptyMessage>
+        )
+      }
+      </CartDropdownItemsContainer>
+      <CartSummaryContainer>
+        <TotalPriceContainer>{`Total: $${totalPrice}`}</TotalPriceContainer>
         <Button onClick={goToCheckoutPageHandler}>GO TO CHECKOUT</Button>
-      </div>
-    </div>
+      </CartSummaryContainer>
+    </CartDropdownContainer>
   )
 }
